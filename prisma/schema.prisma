@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+
+  coursesCreated Course[] @relation("CreatedCourses")
+  enrollments    Enrollment[]
+  reviews        Review[]
+  certificates   Certificate[]
+  payments       Payment[]
+}
+
+model Course {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  thumbnailUrl String
+  status      Status     @default(DRAFT)
+  createdAt   DateTime   @default(now())
+
+  createdBy   User       @relation("CreatedCourses", fields: [createdById], references: [id])
+  createdById String
+
+  sections    Section[]
+  enrollments Enrollment[]
+  reviews     Review[]
+  certificates Certificate[]
+  payments     Payment[]
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  title     String
+  videoUrl  String
+  createdAt DateTime @default(now())
+
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   String
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  enrolledAt DateTime @default(now())
+  progress   Float    @default(0.0)
+  completed  Boolean  @default(false)
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String
+}
+
+model Certificate {
+  id        String   @id @default(uuid())
+  issuedAt  DateTime @default(now())
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String
+}
+
+model Payment {
+  id                 String   @id @default(uuid())
+  razorpayOrderId    String
+  razorpayPaymentId  String
+  amount             Float
+  status             String
+  createdAt          DateTime @default(now())
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Status {
+  PUBLISHED
+  DRAFT
+}
