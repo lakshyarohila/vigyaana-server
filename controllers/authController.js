@@ -90,3 +90,12 @@ exports.logout = async (req, res) => {
     .status(200)
     .json({ message: 'Logged out successfully' });
 };
+exports.getCurrentUser = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: 'Not logged in' });
+    const { id, name, email, role } = req.user;
+    res.json({ id, name, email, role });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};

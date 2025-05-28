@@ -139,3 +139,21 @@ exports.updateProgress = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+exports.checkEnrollment = async (req, res) => {
+  const { courseId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const enrolled = await prisma.enrollment.findFirst({
+      where: {
+        userId,
+        courseId,
+      },
+    });
+
+    res.json({ enrolled: !!enrolled });
+  } catch (err) {
+    console.error('Check enrollment error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

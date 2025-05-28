@@ -15,7 +15,26 @@ const {
 router.get('/', getAllPublishedCourses);
 router.get('/mine', protect, getMyCourses);
 router.post('/', protect, isInstructor, upload.single('thumbnail'), createCourse);
-router.patch('/:id/status', protect, isInstructor, updateCourseStatus);
+
+
+
+
+
+const allowAdminOrInstructor = (req, res, next) => {
+  if (req.user.role === 'INSTRUCTOR' || req.user.role === 'ADMIN') {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied' });
+};
+router.patch('/:id/status', protect, allowAdminOrInstructor, updateCourseStatus);
+
+
+
+
+
+
+
 router.delete('/:id', protect, isInstructor, deleteCourse);
+
 
 module.exports = router;

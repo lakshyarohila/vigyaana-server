@@ -15,7 +15,7 @@ exports.createOrder = async (req, res) => {
     const options = {
       amount: Math.round(course.price * 100), // price in paise
       currency: 'INR',
-      receipt: `receipt_${courseId}_${Date.now()}`,
+      receipt: `rcpt_${courseId.slice(0, 8)}_${Date.now()}`, // ✅ Fixed: < 40 chars
     };
 
     const order = await razorpay.orders.create(options);
@@ -31,6 +31,7 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.verifyPayment = async (req, res) => {
   const {

@@ -32,7 +32,7 @@ exports.createCourse = async (req, res) => {
 exports.getAllPublishedCourses = async (req, res) => {
   try {
     const courses = await prisma.course.findMany({
-      where: { status: 'PUBLISHED' },
+      where: { status: 'PUBLISHED' }, // 👈 critical!
       include: {
         createdBy: { select: { id: true, name: true } },
         _count: { select: { sections: true, enrollments: true } },
@@ -64,13 +64,8 @@ exports.updateCourseStatus = async (req, res) => {
   const { status } = req.body;
 
   try {
-    const course = await prisma.course.findUnique({
-      where: { id },
-    });
-
-    if (!course || course.createdById !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
+    const course = await prisma.course.findUnique({ where: { id } });
+    if (!course) return res.status(404).json({ message: 'Course not found' });
 
     const updated = await prisma.course.update({
       where: { id },
