@@ -53,7 +53,7 @@ model Section {
   videoUrl  String
   createdAt DateTime @default(now())
 
-  course     Course   @relation(fields: [courseId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId   String
 }
 
@@ -63,9 +63,10 @@ model Enrollment {
   progress   Float    @default(0.0)
   completed  Boolean  @default(false)
 
-  user     User   @relation(fields: [userId], references: [id])
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
-  course   Course @relation(fields: [courseId], references: [id])
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 }
 
@@ -85,9 +86,10 @@ model Certificate {
   id        String   @id @default(uuid())
   issuedAt  DateTime @default(now())
 
-  user     User   @relation(fields: [userId], references: [id])
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
-  course   Course @relation(fields: [courseId], references: [id])
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 }
 
@@ -99,9 +101,10 @@ model Payment {
   status             String
   createdAt          DateTime @default(now())
 
-  user     User   @relation(fields: [userId], references: [id])
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
-  course   Course @relation(fields: [courseId], references: [id])
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 }
 
