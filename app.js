@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: 'https://vigyaana-frontend.vercel.app',
+  origin: 'https://vigyaana-frontend.vercel.app/',
   credentials: true,
 }));
 app.use(helmet())
