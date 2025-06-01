@@ -13,6 +13,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -21,28 +22,29 @@ model User {
   role      Role     @default(STUDENT)
   createdAt DateTime @default(now())
 
-  coursesCreated Course[] @relation("CreatedCourses")
+  coursesCreated Course[]      @relation("CreatedCourses")
   enrollments    Enrollment[]
   reviews        Review[]
   certificates   Certificate[]
   payments       Payment[]
+  Blog           Blog[]
 }
 
 model Course {
-  id          String     @id @default(uuid())
-  title       String
-  description String
-  price       Float
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  price        Float
   thumbnailUrl String
-  status      Status     @default(DRAFT)
-  createdAt   DateTime   @default(now())
+  status       Status   @default(DRAFT)
+  createdAt    DateTime @default(now())
 
-  createdBy   User       @relation("CreatedCourses", fields: [createdById], references: [id])
+  createdBy   User   @relation("CreatedCourses", fields: [createdById], references: [id])
   createdById String
 
-  sections    Section[]
-  enrollments Enrollment[]
-  reviews     Review[]
+  sections     Section[]
+  enrollments  Enrollment[]
+  reviews      Review[]
   certificates Certificate[]
   payments     Payment[]
 }
@@ -53,8 +55,8 @@ model Section {
   videoUrl  String
   createdAt DateTime @default(now())
 
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId   String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
 }
 
 model Enrollment {
@@ -63,8 +65,8 @@ model Enrollment {
   progress   Float    @default(0.0)
   completed  Boolean  @default(false)
 
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
@@ -83,26 +85,26 @@ model Review {
 }
 
 model Certificate {
-  id        String   @id @default(uuid())
-  issuedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  issuedAt DateTime @default(now())
 
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 }
 
 model Payment {
-  id                 String   @id @default(uuid())
-  razorpayOrderId    String
-  razorpayPaymentId  String
-  amount             Float
-  status             String
-  createdAt          DateTime @default(now())
+  id                String   @id @default(uuid())
+  razorpayOrderId   String
+  razorpayPaymentId String
+  amount            Float
+  status            String
+  createdAt         DateTime @default(now())
 
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
@@ -117,4 +119,16 @@ enum Role {
 enum Status {
   PUBLISHED
   DRAFT
+}
+
+model Blog {
+  id       String @id @default(uuid())
+  title    String
+  content  String
+  imageUrl String
+
+  createdAt DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
 }

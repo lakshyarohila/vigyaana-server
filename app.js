@@ -33,4 +33,5 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/blogs', require('./routes/blogRoutes'));
 module.exports = app;
