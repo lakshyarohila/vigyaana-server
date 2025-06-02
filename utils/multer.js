@@ -1,13 +1,15 @@
 const multer = require('multer');
 const path = require('path');
 
-// Save to temp before Cloudinary uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname}`),
-});
+const storage = multer.diskStorage({});
 
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png' && ext !== '.webp') {
+    cb(new Error('Only images are allowed'), false);
+    return;
+  }
+  cb(null, true);
+};
 
-module.exports = upload;
+module.exports = multer({ storage, fileFilter });
