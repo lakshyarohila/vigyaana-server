@@ -20,44 +20,6 @@ router.get('/courses', protect, isAdmin, async (req, res) => {
 });
 
 // GET monthly revenue (admin-only)
-router.get('/stats/revenue', protect, isAdmin, async (req, res) => {
-  try {
-    const payments = await prisma.payment.findMany({
-      where: {
-        status: 'SUCCESS', // adjust if you use something else
-      },
-      select: {
-        amount: true,
-        createdAt: true,
-      },
-    });
-
-    const revenueMap = {};
-
-    payments.forEach((payment) => {
-      const date = new Date(payment.createdAt);
-      const month = date.toLocaleString('default', { month: 'short' }); // Jan, Feb...
-      const year = date.getFullYear();
-      const key = `${month}-${year}`;
-
-      if (!revenueMap[key]) {
-        revenueMap[key] = 0;
-      }
-      revenueMap[key] += payment.amount;
-    });
-
-    // Convert to array and sort by date
-    const revenueData = Object.entries(revenueMap).map(([label, totalRevenue]) => ({
-      label,
-      totalRevenue,
-    })).sort((a, b) => new Date(`1 ${a.label}`) - new Date(`1 ${b.label}`));
-
-    res.json(revenueData);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 
 
@@ -86,6 +48,48 @@ router.get('/stats', protect, isAdmin, async (req, res) => {
   }
 });
 
+router.get('/stats/revenue', protect, isAdmin, async (req, res) => {
+  try {
+    const payments = await prisma.payment.findMany({
+      where: {
+        status: {
+          equals: 'success',      // match your real status value
+          mode: 'insensitive',    // allows SUCCESS, Success, success, etc.
+        },
+      },
+      select: {
+        amount: true,
+        createdAt: true,
+      },
+    });
+
+    const revenueMap = {};
+
+    payments.forEach((payment) => {
+      const date = new Date(payment.createdAt);
+      const month = date.toLocaleString('default', { month: 'short' }); // Jan, Feb...
+      const year = date.getFullYear();
+      const key = `${month}-${year}`;
+
+      if (!revenueMap[key]) {
+        revenueMap[key] = 0;
+      }
+      revenueMap[key] += payment.amount;
+    });
+
+    const revenueData = Object.entries(revenueMap)
+      .map(([label, totalRevenue]) => ({
+        label,
+        totalRevenue,
+      }))
+      .sort((a, b) => new Date(`1 ${a.label}`) - new Date(`1 ${b.label}`));
+
+    res.json(revenueData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 
