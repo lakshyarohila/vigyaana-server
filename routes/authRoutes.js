@@ -74,4 +74,54 @@ router.post("/forgot-password", async (req, res) => {
   return res.json({ message: "Password reset link sent to email" });
 });
 
+
+// 🟢 Google OAuth Setup
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/api/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const email = profile.emails[0].value;
+        let user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email,
+              name: profile.displayName,
+              password: "", // optional if you want to distinguish Google users
+            },
+          });
+        }
+
+        return done(null, user);
+      } catch (err) {
+        return done(err, null);
+      }
+    }
+  )
+);
+
+router.use(passport.initialize());
+
+// ⏩ Trigger Google Login
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// 🔁 Google Callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  (req, res) => {
+    const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // Redirect with token to frontend
+    res.redirect(`https://vigyaana-frontend.vercel.app/login?token=${token}`);
+  }
+);
 module.exports = router;
