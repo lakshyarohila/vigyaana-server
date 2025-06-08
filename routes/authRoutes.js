@@ -120,7 +120,7 @@ router.get(
       expiresIn: "7d",
     });
 
-    // Redirect with token to frontend
+    // Redirect with token to frontend with vercel
     res.redirect(`https://vigyaana-frontend.vercel.app/login?token=${token}`);
   }
 );
