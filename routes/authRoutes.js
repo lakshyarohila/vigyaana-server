@@ -6,6 +6,9 @@ const { getCurrentUser } = require("../controllers/authController");
 const protect = require("../middleware/auth");
 const prisma = require("../config/db");
 const crypto = require("crypto");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const jwt = require("jsonwebtoken");
 
 const bcrypt = require("bcryptjs");
 
