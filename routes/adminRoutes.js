@@ -53,7 +53,7 @@ router.get('/stats/revenue', protect, isAdmin, async (req, res) => {
     const payments = await prisma.payment.findMany({
       where: {
         status: {
-          equals: 'success',      // match your real status value
+          equals: 'success',      
           mode: 'insensitive',    // allows SUCCESS, Success, success, etc.
         },
       },
