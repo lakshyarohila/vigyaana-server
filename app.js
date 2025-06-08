@@ -9,6 +9,8 @@ const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const communityRoutes = require('./routes/communityRoutes');
+
 const helmet = require('helmet');
 const morgan = require('morgan');
 
@@ -35,4 +37,5 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/community', communityRoutes);
 module.exports = app;
