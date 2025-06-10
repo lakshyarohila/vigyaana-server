@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendResetEmail = require("../utils/sendEmail");
 const protect = require("../middleware/auth");
-
+const { OAuth2Client } = require('google-auth-library');
 const { register, login, logout, getCurrentUser } = require("../controllers/authController");
 
 // Basic email/password auth
@@ -15,6 +15,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.get("/me", protect, getCurrentUser);
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Forgot Password
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
@@ -77,14 +78,27 @@ router.post("/reset-password", async (req, res) => {
 });
 
 // ✅ New: Manual Google Login (token sent from frontend)
-router.post("/google-login", async (req, res) => {
-  const { email, name } = req.body;
+router.post('/google-login', async (req, res) => {
+  const { credential } = req.body; // frontend sends the Google token
 
-  if (!email || !name) {
-    return res.status(400).json({ message: "Email and name are required" });
+  if (!credential) {
+    return res.status(400).json({ message: 'Missing Google credential' });
   }
 
   try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    if (!email || !name) {
+      return res.status(400).json({ message: 'Invalid Google token' });
+    }
+
+    // Check or create user
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -92,34 +106,37 @@ router.post("/google-login", async (req, res) => {
         data: {
           email,
           name,
-          password: "", // optional placeholder
+          password: '', // blank password for Google users
+          role: 'STUDENT', // or default role
         },
       });
     }
 
+    // Create your backend's JWT
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: '7d',
     });
 
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      })
-      .json({
-        message: "Google login successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
+    // Set cookie (same as your normal login)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({
+      message: 'Google login successful',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (err) {
-    console.error("Google login error:", err);
-    return res.status(500).json({ message: "Server error" });
+    console.error('Google login error:', err);
+    return res.status(401).json({ message: 'Google token verification failed' });
   }
 });
 
