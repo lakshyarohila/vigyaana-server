@@ -18,10 +18,20 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin: 'https://vigyaana-frontend.vercel.app',
-  credentials: true,
-}));
+const allowedOrigins = ['https://vigyaana-frontend.vercel.app', 'http://localhost:3000'];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(helmet())
 app.use(express.json());
 app.use(cookieParser());
