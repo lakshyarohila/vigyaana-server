@@ -8,7 +8,7 @@ const sendResetEmail = require("../utils/sendEmail");
 const protect = require("../middleware/auth");
 const { OAuth2Client } = require('google-auth-library');
 const { register, login, logout, getCurrentUser } = require("../controllers/authController");
-
+import 'dotenv/config'
 // Basic email/password auth
 router.post("/register", register);
 router.post("/login", login);
