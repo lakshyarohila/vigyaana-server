@@ -37,10 +37,18 @@ app.use(cors({
 }));
 
 // ✅ Preflight fix for all routes
-app.options('*', cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).end();
+  } else {
+    res.status(403).send('Not allowed by CORS');
+  }
+});
 
 app.use(helmet())
 app.use(express.json());
