@@ -81,23 +81,34 @@ router.post("/reset-password", async (req, res) => {
 
 // ✅ New: Manual Google Login (token sent from frontend)
 router.post('/google-login', async (req, res) => {
-  const { credential } = req.body; // frontend sends the Google token
-
+  const { credential } = req.body; // frontend sends the Google JWT token
+  
+  console.log('Received request body:', req.body); // Debug log
+  
   if (!credential) {
+    console.error('Missing Google credential in request');
     return res.status(400).json({ message: 'Missing Google credential' });
   }
 
   try {
+    // Verify the Google JWT token
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: process.env.GOOGLE_CLIENT_ID, // Make sure this matches your frontend client ID
     });
 
     const payload = ticket.getPayload();
-    const { email, name } = payload;
+    console.log('Google token payload:', payload); // Debug log
+    
+    const { email, name, picture, email_verified } = payload;
 
     if (!email || !name) {
-      return res.status(400).json({ message: 'Invalid Google token' });
+      return res.status(400).json({ message: 'Invalid Google token - missing email or name' });
+    }
+
+    // Optional: Check if email is verified
+    if (!email_verified) {
+      return res.status(400).json({ message: 'Google email not verified' });
     }
 
     // Check or create user
@@ -110,25 +121,37 @@ router.post('/google-login', async (req, res) => {
           name,
           password: '', // blank password for Google users
           role: 'STUDENT', // or default role
+          // Optional: store profile picture
+          // profileImage: picture,
         },
       });
+      console.log('Created new user:', user.id);
+    } else {
+      console.log('Found existing user:', user.id);
     }
 
     // Create your backend's JWT
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { 
+        id: user.id,
+        email: user.email,
+        role: user.role 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '7d' }
+    );
 
     // Set cookie (same as your normal login)
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.json({
       message: 'Google login successful',
+      success: true,
       user: {
         id: user.id,
         name: user.name,
@@ -138,7 +161,22 @@ router.post('/google-login', async (req, res) => {
     });
   } catch (err) {
     console.error('Google login error:', err);
-    return res.status(401).json({ message: 'Google token verification failed' });
+    
+    // More specific error handling
+    if (err.message && err.message.includes('Token used too early')) {
+      return res.status(401).json({ message: 'Google token used too early' });
+    }
+    if (err.message && err.message.includes('Token used too late')) {
+      return res.status(401).json({ message: 'Google token expired' });
+    }
+    if (err.message && err.message.includes('Invalid token signature')) {
+      return res.status(401).json({ message: 'Invalid Google token signature' });
+    }
+    
+    return res.status(401).json({ 
+      message: 'Google token verification failed',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
