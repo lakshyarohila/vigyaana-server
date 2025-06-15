@@ -8,13 +8,22 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    
+    // ✅ FIX: Handle both JWT structures (userId from regular login, id from Google)
+    const userId = decoded.userId || decoded.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Invalid token structure' });
+    }
+    
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) return res.status(401).json({ message: 'User not found' });
 
     req.user = user;
     next();
   } catch (err) {
+    console.error('JWT verification error:', err);
     return res.status(401).json({ message: 'Invalid token' });
   }
 };
