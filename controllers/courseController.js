@@ -1,12 +1,16 @@
 const prisma = require('../config/db');
 const cloudinary = require('../config/cloudinary');
 
+// ✅ Create a Course
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, price } = req.body;
+    const { title, description, price, type } = req.body;
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: 'Thumbnail is required' });
+
+    // Validate course type (optional fallback to RECORDED)
+    const courseType = ['LIVE', 'RECORDED'].includes(type) ? type : 'RECORDED';
 
     const upload = await cloudinary.uploader.upload(file.path, {
       folder: 'vigyana/courses',
@@ -19,6 +23,7 @@ exports.createCourse = async (req, res) => {
         price: parseFloat(price),
         thumbnailUrl: upload.secure_url,
         createdById: req.user.id,
+        type: courseType, // ✅ Support for LIVE/RECORDED
       },
     });
 
@@ -29,10 +34,11 @@ exports.createCourse = async (req, res) => {
   }
 };
 
+// ✅ Get All Published Courses
 exports.getAllPublishedCourses = async (req, res) => {
   try {
     const courses = await prisma.course.findMany({
-      where: { status: 'PUBLISHED' }, // 👈 critical!
+      where: { status: 'PUBLISHED' },
       include: {
         createdBy: { select: { id: true, name: true } },
         _count: { select: { sections: true, enrollments: true } },
@@ -46,10 +52,19 @@ exports.getAllPublishedCourses = async (req, res) => {
   }
 };
 
+// ✅ Get Logged-in Instructor’s Courses
 exports.getMyCourses = async (req, res) => {
   try {
     const courses = await prisma.course.findMany({
       where: { createdById: req.user.id },
+      include: {
+        _count: {
+          select: {
+            sections: true,
+            enrollments: true,
+          },
+        },
+      },
     });
 
     res.json(courses);
@@ -59,6 +74,7 @@ exports.getMyCourses = async (req, res) => {
   }
 };
 
+// ✅ Update Course Status (Draft/Published)
 exports.updateCourseStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -79,6 +95,7 @@ exports.updateCourseStatus = async (req, res) => {
   }
 };
 
+// ✅ Delete Course (Only creator can delete)
 exports.deleteCourse = async (req, res) => {
   const { id } = req.params;
 
