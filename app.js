@@ -10,7 +10,9 @@ const certificateRoutes = require('./routes/certificateRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const communityRoutes = require('./routes/communityRoutes');
-
+const liveRoutes = require("./routes/liveRoutes");
+const liveSessionRoutes = require('./routes/liveSessionRoutes');
+const googleCalendarRoutes = require('./routes/googleCalendarRoutes');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
@@ -29,6 +31,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
+
 app.use('/api/courses', courseRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
@@ -38,4 +41,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/community', communityRoutes);
+app.use("/api/live", liveRoutes);
+app.use('/api/google', googleCalendarRoutes);
+app.use('/api/live-sessions', liveSessionRoutes);
 module.exports = app;

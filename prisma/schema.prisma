@@ -27,22 +27,37 @@ model User {
 }
 
 model Course {
-  id           String   @id @default(uuid())
+  id           String      @id @default(uuid())
   title        String
   description  String
   price        Float
   thumbnailUrl String
-  status       Status   @default(DRAFT)
-  createdAt    DateTime @default(now())
+  status       Status      @default(DRAFT)
+  type         CourseType  @default(RECORDED) // ✅ Identifies live vs recorded
+  createdAt    DateTime    @default(now())
 
   createdBy   User   @relation("CreatedCourses", fields: [createdById], references: [id])
   createdById String
 
   sections     Section[]
+  sessions     Session[]       // ✅ Replaces old LiveSession, supports both types
   enrollments  Enrollment[]
   reviews      Review[]
   certificates Certificate[]
   payments     Payment[]
+}
+
+model Session {
+  id          String      @id @default(uuid())
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  type        SessionType @default(RECORDED)
+  meetLink    String? // optional for recorded
+  createdAt   DateTime   @default(now())
 }
 
 model Section {
@@ -106,17 +121,6 @@ model Payment {
   courseId String
 }
 
-enum Role {
-  STUDENT
-  INSTRUCTOR
-  ADMIN
-}
-
-enum Status {
-  PUBLISHED
-  DRAFT
-}
-
 model Blog {
   id       String @id @default(uuid())
   title    String
@@ -147,4 +151,26 @@ model CommunityMessage {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+}
+
+// ✅ ENUMS
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Status {
+  PUBLISHED
+  DRAFT
+}
+
+enum CourseType {
+  RECORDED
+  LIVE
+}
+
+enum SessionType {
+  RECORDED
+  LIVE
 }
