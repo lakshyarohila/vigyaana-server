@@ -9,13 +9,13 @@ const {
   getAllPublishedCourses,
   getMyCourses,
   updateCourseStatus,
-  deleteCourse,getCourseById
+  deleteCourse,
 } = require('../controllers/courseController');
 
 router.get('/', getAllPublishedCourses);
 router.get('/mine', protect, getMyCourses);
 router.post('/', protect, isInstructor, upload.single('thumbnail'), createCourse);
-router.get('/:id', protect, getCourseById);
+
 
 
 
