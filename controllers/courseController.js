@@ -9,7 +9,6 @@ exports.createCourse = async (req, res) => {
 
     if (!file) return res.status(400).json({ message: 'Thumbnail is required' });
 
-    // Validate course type (optional fallback to RECORDED)
     const courseType = ['LIVE', 'RECORDED'].includes(type) ? type : 'RECORDED';
 
     const upload = await cloudinary.uploader.upload(file.path, {
@@ -23,7 +22,7 @@ exports.createCourse = async (req, res) => {
         price: parseFloat(price),
         thumbnailUrl: upload.secure_url,
         createdById: req.user.id,
-        type: courseType, // ✅ Support for LIVE/RECORDED
+        type: courseType,
       },
     });
 
@@ -70,6 +69,29 @@ exports.getMyCourses = async (req, res) => {
     res.json(courses);
   } catch (err) {
     console.error('Fetch my courses error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ✅ Get Course by ID (🔧 required for adding sessions)
+exports.getCourseById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        sections: true,
+        liveSessions: true,
+      },
+    });
+
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    res.json(course);
+  } catch (err) {
+    console.error('Fetch course by id error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
