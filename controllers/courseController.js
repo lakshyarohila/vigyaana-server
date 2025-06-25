@@ -27,9 +27,41 @@ exports.createCourse = async (req, res) => {
       },
     });
 
-    res.status(201).json({ message: 'Course created', course });
+    res.status(201).json(course); // Return the course directly (frontend expects this)
   } catch (err) {
     console.error('Create course error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ✅ Get Single Course by ID (MISSING - This is what your frontend needs!)
+exports.getCourseById = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        sections: true,
+        liveSession: true, // Include live sessions if they exist
+        _count: { 
+          select: { 
+            sections: true, 
+            enrollments: true,
+            liveSession: true 
+          } 
+        },
+      },
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.json(course);
+  } catch (err) {
+    console.error('Get course by ID error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -52,7 +84,7 @@ exports.getAllPublishedCourses = async (req, res) => {
   }
 };
 
-// ✅ Get Logged-in Instructor’s Courses
+// ✅ Get Logged-in Instructor's Courses
 exports.getMyCourses = async (req, res) => {
   try {
     const courses = await prisma.course.findMany({

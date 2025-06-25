@@ -1,9 +1,10 @@
 const express = require('express');
-const { createLiveSession } = require('../controllers/liveSessionController');
-const protect = require('../middleware/auth'); // Ensure instructor is logged in
-
 const router = express.Router();
+const protect = require('../middleware/auth');
+const { createLiveSession, getLiveSessionsByCourse } = require('../controllers/liveSessionController');
 
-router.post('/', protect, createLiveSession); // POST /api/live-sessions
+// ✅ Live session routes
+router.post('/', protect, createLiveSession); // POST /api/livesessions
+router.get('/course/:courseId', protect, getLiveSessionsByCourse); // GET /api/livesessions/course/:courseId
 
 module.exports = router;

@@ -13,6 +13,11 @@ const communityRoutes = require('./routes/communityRoutes');
 const liveRoutes = require("./routes/liveRoutes");
 const liveSessionRoutes = require('./routes/liveSessionRoutes');
 const googleCalendarRoutes = require('./routes/googleCalendarRoutes');
+
+
+
+
+
 const helmet = require('helmet');
 const morgan = require('morgan');
 
@@ -43,5 +48,12 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/community', communityRoutes);
 app.use("/api/live", liveRoutes);
 app.use('/api/google', googleCalendarRoutes);
-app.use('/api/live-sessions', liveSessionRoutes);
+
+
+
+
+app.use('/api/courses', courseRoutes);
+app.use('/api/sections', sectionRoutes);
+app.use('/api/livesessions', liveSessionRoutes);
+
 module.exports = app;

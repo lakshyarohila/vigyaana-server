@@ -1,67 +1,73 @@
-const { google } = require('googleapis');
 const prisma = require('../config/db');
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'https://vigyaana-server.onrender.com/api/google/oauth-callback'
-);
-
+// ✅ Create a live session (simplified version)
 const createLiveSession = async (req, res) => {
-  const { courseId, title, description, startTime, endTime } = req.body;
-
   try {
-    const course = await prisma.course.findUnique({ where: { id: courseId }, include: { createdBy: true } });
-    if (!course) return res.status(404).json({ message: 'Course not found' });
+    const { courseId, topic, scheduledAt } = req.body;
 
-    const tokenRecord = await prisma.googleToken.findUnique({ where: { email: course.createdBy.email } });
-    if (!tokenRecord) return res.status(403).json({ message: 'Instructor has not connected Google Calendar' });
+    if (!courseId || !topic || !scheduledAt) {
+      return res.status(400).json({ message: 'Course ID, topic, and scheduled time are required' });
+    }
 
-    oauth2Client.setCredentials({
-      access_token: tokenRecord.accessToken,
-      refresh_token: tokenRecord.refreshToken,
+    // Validate that the course exists and belongs to the instructor
+    const course = await prisma.course.findUnique({ 
+      where: { id: courseId },
+      select: { id: true, createdById: true, type: true }
     });
 
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
 
-    const event = {
-      summary: title,
-      description,
-      start: { dateTime: new Date(startTime).toISOString() },
-      end: { dateTime: new Date(endTime).toISOString() },
-      conferenceData: {
-        createRequest: {
-          requestId: `${courseId}-${Date.now()}`,
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-    };
+    if (course.createdById !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to create session for this course' });
+    }
 
-    const calendarRes = await calendar.events.insert({
-      calendarId: 'primary',
-      resource: event,
-      conferenceDataVersion: 1,
-    });
+    if (course.type !== 'LIVE') {
+      return res.status(400).json({ message: 'Live sessions can only be created for LIVE courses' });
+    }
 
-    const meetLink = calendarRes.data.hangoutLink;
+    // Create live session with a default meet link (you can enhance this later)
+    const meetLink = `https://meet.google.com/${Math.random().toString(36).substring(7)}`;
 
-    const session = await prisma.session.create({
+    const liveSession = await prisma.liveSession.create({
       data: {
+        topic,
         courseId,
-        title,
-        description,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        type: 'LIVE',
         meetLink,
+        scheduledAt: new Date(scheduledAt),
       },
     });
 
-    res.status(201).json({ message: 'Live session created', session });
+    res.status(201).json({
+      message: 'Live session created successfully',
+      session: liveSession
+    });
+
   } catch (err) {
     console.error('Create live session error:', err);
-    res.status(500).json({ message: 'Failed to create session', error: err.message });
+    res.status(500).json({ message: 'Failed to create live session' });
   }
 };
 
-module.exports = { createLiveSession };
+// ✅ Get all live sessions for a course
+const getLiveSessionsByCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    const sessions = await prisma.liveSession.findMany({
+      where: { courseId },
+      orderBy: { scheduledAt: 'asc' },
+    });
+
+    res.json(sessions);
+  } catch (err) {
+    console.error('Fetch live sessions error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = {
+  createLiveSession,
+  getLiveSessionsByCourse,
+};
