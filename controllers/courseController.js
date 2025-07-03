@@ -3,7 +3,7 @@ const cloudinary = require('../config/cloudinary');
 
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, price } = req.body;
+    const { title, description, price, whatsappGroupLink } = req.body; // ✅ new field
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: 'Thumbnail is required' });
@@ -19,6 +19,7 @@ exports.createCourse = async (req, res) => {
         price: parseFloat(price),
         thumbnailUrl: upload.secure_url,
         createdById: req.user.id,
+        whatsappGroupLink: whatsappGroupLink || null, // ✅ save if provided
       },
     });
 
@@ -32,7 +33,7 @@ exports.createCourse = async (req, res) => {
 exports.getAllPublishedCourses = async (req, res) => {
   try {
     const courses = await prisma.course.findMany({
-      where: { status: 'PUBLISHED' }, // 👈 critical!
+      where: { status: 'PUBLISHED' },
       include: {
         createdBy: { select: { id: true, name: true } },
         _count: { select: { sections: true, enrollments: true } },
@@ -61,7 +62,7 @@ exports.getMyCourses = async (req, res) => {
 
 exports.updateCourseStatus = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, whatsappGroupLink } = req.body;
 
   try {
     const course = await prisma.course.findUnique({ where: { id } });
@@ -69,12 +70,45 @@ exports.updateCourseStatus = async (req, res) => {
 
     const updated = await prisma.course.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        whatsappGroupLink: whatsappGroupLink || course.whatsappGroupLink,
+      },
     });
 
     res.json({ message: 'Status updated', course: updated });
   } catch (err) {
     console.error('Update status error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateWhatsAppLink = async (req, res) => {
+  const { id } = req.params;
+  const { whatsappGroupLink } = req.body;
+
+  try {
+    const course = await prisma.course.findUnique({
+      where: { id },
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Only instructor who created it can update
+    if (course.createdById !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const updated = await prisma.course.update({
+      where: { id },
+      data: { whatsappGroupLink },
+    });
+
+    res.json({ message: 'WhatsApp link updated', course: updated });
+  } catch (err) {
+    console.error('Update WhatsApp link error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

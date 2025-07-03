@@ -27,20 +27,21 @@ model User {
 }
 
 model Course {
-  id           String      @id @default(uuid())
-  title        String
-  description  String
-  price        Float
-  thumbnailUrl String
-  status       Status      @default(DRAFT)
-  type         CourseType  @default(RECORDED) // ✅ Identifies live vs recorded
-  createdAt    DateTime    @default(now())
+  id                String      @id @default(uuid())
+  title             String
+  description       String
+  price             Float
+  thumbnailUrl      String
+  status            Status      @default(DRAFT)
+  type              CourseType  @default(RECORDED) // ✅ Identifies live vs recorded
+  whatsappGroupLink String?     // ✅ NEW FIELD - optional WhatsApp group link
+  createdAt         DateTime    @default(now())
 
   createdBy   User   @relation("CreatedCourses", fields: [createdById], references: [id])
   createdById String
 
   sections     Section[]
-  sessions     Session[]       // ✅ Replaces old LiveSession, supports both types
+  sessions     Session[]
   enrollments  Enrollment[]
   reviews      Review[]
   certificates Certificate[]
@@ -56,8 +57,8 @@ model Session {
   startTime   DateTime
   endTime     DateTime
   type        SessionType @default(RECORDED)
-  meetLink    String? // optional for recorded
-  createdAt   DateTime   @default(now())
+  meetLink    String?
+  createdAt   DateTime    @default(now())
 }
 
 model Section {

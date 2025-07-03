@@ -9,7 +9,7 @@ const {
   getAllPublishedCourses,
   getMyCourses,
   updateCourseStatus,
-  deleteCourse,
+  deleteCourse,updateWhatsAppLink
 } = require('../controllers/courseController');
 
 router.get('/', getAllPublishedCourses);
@@ -30,7 +30,7 @@ router.patch('/:id/status', protect, allowAdminOrInstructor, updateCourseStatus)
 
 
 
-
+router.patch('/:id/whatsapp-link', protect, isInstructor, updateWhatsAppLink);
 
 
 
