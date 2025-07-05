@@ -46,7 +46,11 @@ exports.getMyEnrolledCourses = async (req, res) => {
       where: { userId: req.user.id },
       include: {
         course: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            thumbnailUrl: true,
+            type: true, // ✅ now course.type will be available
             createdBy: { select: { id: true, name: true } },
             _count: { select: { sections: true } },
           },
@@ -59,7 +63,7 @@ exports.getMyEnrolledCourses = async (req, res) => {
     console.error('Get enrolled error:', err);
     res.status(500).json({ message: 'Server error' });
   }
-};
+}
 
 exports.getEnrolledCourseSections = async (req, res) => {
   const { courseId } = req.params;
