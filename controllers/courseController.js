@@ -3,7 +3,7 @@ const cloudinary = require('../config/cloudinary');
 
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, price, whatsappGroupLink } = req.body; // ✅ new field
+    const { title, description, price, whatsappGroupLink, type } = req.body; // ✅ added type field
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: 'Thumbnail is required' });
@@ -19,7 +19,8 @@ exports.createCourse = async (req, res) => {
         price: parseFloat(price),
         thumbnailUrl: upload.secure_url,
         createdById: req.user.id,
-        whatsappGroupLink: whatsappGroupLink || null, // ✅ save if provided
+        type: type || 'RECORDED', // ✅ save type, fallback to RECORDED
+        whatsappGroupLink: whatsappGroupLink || null,
       },
     });
 
@@ -29,6 +30,7 @@ exports.createCourse = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.getAllPublishedCourses = async (req, res) => {
   try {
